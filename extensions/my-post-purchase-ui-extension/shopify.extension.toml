@@ -1,6 +1,8 @@
 name = "my-post-purchase-ui-extension"
 type = "checkout_post_purchase"
 
+[capabilities]
+network_access = true
 
 # [[metafields]]
 # namespace = "my-namespace"

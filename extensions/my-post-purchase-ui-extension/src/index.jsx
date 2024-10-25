@@ -1,106 +1,75 @@
-/**
- * Extend Shopify Checkout with a custom Post Purchase user experience.
- * This template provides two extension points:
- *
- *  1. ShouldRender - Called first, during the checkout process, when the
- *     payment page loads.
- *  2. Render - If requested by `ShouldRender`, will be rendered after checkout
- *     completes
- */
-import React from 'react';
-
 import {
-  extend,
-  render,
-  BlockStack,
-  Button,
-  CalloutBanner,
-  Heading,
-  Image,
-  Layout,
-  TextBlock,
-  TextContainer,
-  View,
+    extend,
+    render,
+    BlockStack,
+    Button,
+    CalloutBanner,
+    Heading,
+    Layout,
+    TextBlock,
+    TextContainer,
 } from "@shopify/post-purchase-ui-extensions-react";
 
-/**
- * Entry point for the `ShouldRender` Extension Point.
- *
- * Returns a value indicating whether or not to render a PostPurchase step, and
- * optionally allows data to be stored on the client for use in the `Render`
- * extension point.
- */
- extend("Checkout::PostPurchase::ShouldRender", async ({ storage }) => {
-  const initialState = await getRenderData();
-  const render = true;
-
-  if (render) {
-    // Saves initial state, provided to `Render` via `storage.initialData`
-    await storage.update(initialState);
-  }
-
-  return {
-    render,
-  };
+// Shopify extension entry point
+extend("Checkout::PostPurchase::ShouldRender", async ({ storage }) => {
+    const render = true;
+    await storage.update({});
+    return { render };
 });
 
-// Simulate results of network call, etc.
-async function getRenderData() {
-  return {
-      couldBe: "anything",
-  };
-}
-
-/**
-* Entry point for the `Render` Extension Point
-*
-* Returns markup composed of remote UI components.  The Render extension can
-* optionally make use of data stored during `ShouldRender` extension point to
-* expedite time-to-first-meaningful-paint.
-*/
 render("Checkout::PostPurchase::Render", App);
 
-// Top-level React component
-export function App({ extensionPoint, storage }) {
-  const initialState = storage.initialData;
+export function App({ inputData }) {
+    const BACKEND_URL = "https://c067-37-217-91-139.ngrok-free.app";
 
-  return (
-      <BlockStack spacing="loose">
-      <CalloutBanner title="Post-purchase extension template">
-          Use this template as a starting point to build a great post-purchase
-          extension.
-      </CalloutBanner>
-      <Layout
-          maxInlineSize={0.95}
-          media={[
-          { viewportSize: "small", sizes: [1, 30, 1] },
-          { viewportSize: "medium", sizes: [300, 30, 0.5] },
-          { viewportSize: "large", sizes: [400, 30, 0.33] },
-          ]}
-      >
-          <View>
-          <Image source="https://cdn.shopify.com/static/images/examples/img-placeholder-1120x1120.png" />
-          </View>
-          <View />
-          <BlockStack spacing="xloose">
-          <TextContainer>
-              <Heading>Post-purchase extension</Heading>
-              <TextBlock>
-              Here you can cross-sell other products, request a product review
-              based on a previous purchase, and much more.
-              </TextBlock>
-          </TextContainer>
-          <Button
-              submit
-              onPress={() => {
-              // eslint-disable-next-line no-console
-              console.log(`Extension point ${extensionPoint}`, initialState);
-              }}
-          >
-              Primary button
-          </Button>
-          </BlockStack>
-      </Layout>
-      </BlockStack>
-  );
+    // Extract customerId and shop domain from inputData
+    const { initialPurchase: { customerId, lineItems }, shop: { domain } } = inputData;
+
+    console.log(inputData)
+    // Function to fetch data
+    const fetchData = async () => {
+        try {
+            let response = await fetch(`${BACKEND_URL}/customers/${customerId}?shop=${domain}`);
+            console.log("Fetched data:", response);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
+    return (
+        <Layout
+            maxInlineSize={0.95}
+            media={[
+                { viewportSize: "small", sizes: [1] },
+                { viewportSize: "medium", sizes: [0.7] },
+                { viewportSize: "large", sizes: [0.5] },
+            ]}
+        >
+            <BlockStack spacing="loose">
+                <CalloutBanner title="Order Confirmation">
+                    <TextBlock>
+                        the link for vendors to get their access token and store it in the db{`${BACKEND_URL}/auth?shop=${domain}`}
+                    </TextBlock>
+                    <TextBlock>
+                        here we can prompt the user to accept the invite to the community
+                    </TextBlock>
+                    <Button onPress={fetchData}>Get</Button>
+                </CalloutBanner>
+
+                <BlockStack spacing="tight">
+                    <TextContainer>
+                        <Heading>Customer Information</Heading>
+                    </TextContainer>
+                </BlockStack>
+
+                <BlockStack spacing="tight">
+                    <TextContainer>
+                        <Heading>Order Details</Heading>
+                    </TextContainer>
+                </BlockStack>
+
+                <Button submit>Continue Shopping</Button>
+            </BlockStack>
+        </Layout>
+    );
 }
